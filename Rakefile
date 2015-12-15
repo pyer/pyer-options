@@ -29,4 +29,4 @@ task :install do
   gi.install
 end
  
-CLEAN.include "#{target}"
+CLEAN.include "#{spec.name}*.gem"
