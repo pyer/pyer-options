@@ -12,8 +12,8 @@ Usage
 
 Options parses somes words:
 
-* run     : run block is executed during options parsing.
 * banner  : banner add text to the help message. Help message is displayed with implicit option -h|--help|?|help.
+* run     : run block is executed during options parsing.
 * flag    : Linux style boolean option. For example [--verbose] sets verbose flag true. Short option is the first letter of the long option name.
 * value   : Linux style option. Next argument is the value of the option. For example [--name pyer] means name='pyer'. Short option is the first letter of the long option name, as flag option.
 * command : Git style sub-commands, For example [programm status --verbose] means programm executes status command in verbose mode.
@@ -40,14 +40,20 @@ opts.to_hash   #=> {:name=>"Lee", :password=>nil, :verbose=>true}
 
 Installation
 ------------
-    gem install pyer/options
+    gem install pyer-options
+
+Build
+-----
+Building pyer-options gem is a rake task.
+
+    rake build
 
 Test
 ----
     rake test
 
-Printing Help
--------------
+Help
+----
 
 Options attempts to build a good looking help string to print to your users.
 You can get this string by calling `opts.help` method.
