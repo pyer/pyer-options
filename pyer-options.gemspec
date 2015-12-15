@@ -2,10 +2,10 @@
 
 Gem::Specification.new do |s|
   s.name          = 'pyer-options'
-  s.version       = '2.0.1'
+  s.version       = '2.0.2'
   s.author        = 'Pierre BAZONNARD'
   s.email         = ['pierre.bazonnard@gmail.com']
-  s.homepage      = 'https://github.com/pyer/ruby/tree/master/options'
+  s.homepage      = 'https://github.com/pyer/options'
   s.summary       = 'Simple options parser'
   s.description   = 'Simple options parser inspired by slop'
   s.license       = 'MIT'
