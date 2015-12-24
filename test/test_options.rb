@@ -1,5 +1,5 @@
 require "minitest/autorun"
-require 'pyer/options.rb'
+require './lib/pyer/options.rb'
 
 class TestOptions < Minitest::Test
 
