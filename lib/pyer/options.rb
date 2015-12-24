@@ -1,4 +1,6 @@
+# encoding: UTF-8
 module Pyer
+  # Options class
   class Options
     include Enumerable
 
@@ -39,32 +41,25 @@ module Pyer
     # short option is the first letter of long option
     # Returns a new instance of Options.
     def self.parse(items = ARGV, &block)
-      new( &block ).parse items
+      new(&block).parse items
     end
 
-    # The Array of Options::Command objects tied to this Options instance.
     attr_reader :commands
-
-    # The Array of Options::Option objects tied to this Options instance.
     attr_reader :options
 
     # Create a new instance of Options and optionally build options via a block.
     #
     # block  - An optional block used to specify options.
     def initialize(&block)
-      @banner = ""
+      @banner = ''
       @runner = nil
       @commands = []
       @command_name = nil
       @command_callback = nil
-      @options  = []
+      @options = []
       @triggered_options = []
       @longest_cmd = 0
       @longest_flag = 0
-
-  #    if block_given?
-  #      block.arity == 1 ? yield(self) : instance_eval(&block)
-  #    end
       instance_eval(&block) if block_given?
     end
 
@@ -74,91 +69,97 @@ module Pyer
     # block - An optional block which when used will yield non options.
     #
     # Returns an Array of original items with options removed.
-    def parse(items = ARGV, &block)
-      item=items.shift
+    def parse(items = ARGV)
+      item = items.shift
       # need some help ?
-      if item == '?' || item == '-h' || item == '--help' || item == 'help' || item.nil?
-        puts self.help
-        exit
-      end
+      show_help if item == '?' || item == '-h' || item == '--help' || item == 'help' || item.nil?
       # parsing command
-      if !@commands.empty?
-        cmd = commands.find { |cmd| cmd.name == item }
-        raise UnknownCommandError if cmd.nil?
-        @command_name = cmd.name
-        @command_call = cmd.callback
-        item=items.shift
+      unless @commands.empty?
+        parse_command(item)
+        item = items.shift
       end
       # parsing options
       until item.nil?
-        #break if item == '--'
-        if item.match(/^--[^-]+$/).nil? && item.match(/^-[^-]$/).nil?
-          raise InvalidOptionError, "invalid #{item} option"
-        end
-        key = item.sub(/\A--?/, '')
-        option = options.find { |opt| opt.name == key || opt.short == key }
-        if option
-          @triggered_options << option
-          if option.expects_argument?
-            option.value = items.shift
-            raise MissingArgumentError, "missing #{item} argument" if option.value.nil?
-            raise InvalidArgumentError, "(#{item}=#{option.value}) argument can't start with '-'" if option.value.start_with?('-')
-          else
-            option.value = true
-          end
+        option = parse_option(item)
+        if option.expects_argument
+          option.value = items.shift
+          fail MissingArgumentError, "missing #{item} argument" if option.value.nil?
+          fail InvalidArgumentError, "(#{item}=#{option.value}) argument can't start with '-'" if option.value.start_with?('-')
         else
-          raise UnknownOptionError, "unknown #{item} option"
+          option.value = true
         end
-        item=items.shift
+        item = items.shift
       end
-      if @runner.respond_to?(:call)
-        @runner.call(self, items)
-      end
+      @runner.call(self, items) if @runner.respond_to?(:call)
       # return the Options instance
       self
     end
 
-    # Print a handy Options help string.
-    #
-    # Returns the banner followed by available option help strings.
+    def parse_command(command)
+      cmd = commands.find { |c| c.name == command }
+      fail UnknownCommandError if cmd.nil?
+      @command_name = cmd.name
+      @command_call = cmd.callback
+    end
+
+    def parse_option(option)
+      if option.match(/^--[^-]+$/).nil? && option.match(/^-[^-]$/).nil?
+        fail InvalidOptionError, "invalid #{option} option"
+      end
+      key = option.sub(/\A--?/, '')
+      triggered_option = options.find { |opt| opt.name == key || opt.short == key }
+      fail UnknownOptionError, "unknown #{option} option" if triggered_option.nil?
+      @triggered_options << triggered_option
+      triggered_option
+    end
+
+    private :parse_command, :parse_option
+
+    # Print a handy Options help string and exit.
     def help
-      if @commands.empty?
-        helpstr = "Usage: #{File.basename($0)} [options]\n"
-      else
-        helpstr = "Usage: #{File.basename($0)} command [options]\n"
-      end
-      helpstr << @banner if !@banner.empty?
-      if !@commands.empty?
-        helpstr << "Commands:\n"
-        commands.each { |cmd|
-          tab = ' ' * ( @longest_cmd + 1 - cmd.name.size )
-          helpstr << '    ' + cmd.name + tab + ': ' + cmd.description + "\n"
-        }
-      end
-      helpstr << "Options:\n"
-      options.each { |opt|
-        tab = ' ' * ( @longest_flag + 1 - opt.name.size )
-        if opt.expects_argument?
-          arg = ' <arg>'
-        else
-          arg = '      '
-        end
-        helpstr << '    -' + opt.short + '|--' + opt.name + arg + tab + ': ' + opt.description + "\n"
-      }
+      helpstr = "Usage: #{File.basename($PROGRAM_NAME)} "
+      helpstr << 'command ' unless @commands.empty?
+      helpstr << "[options]\n"
+      helpstr << @banner unless @banner.empty?
+      helpstr << help_commands unless @commands.empty?
+      helpstr << help_options
       helpstr
     end
+
+    def help_commands
+      helpstr = "Commands:\n"
+      @commands.each do |cmd|
+        tab = ' ' * (@longest_cmd + 1 - cmd.name.size)
+        helpstr << '    ' + cmd.name + tab + ': ' + cmd.description + "\n"
+      end
+      helpstr
+    end
+
+    def help_options
+      helpstr = "Options:\n"
+      @options.each do |opt|
+        tab = ' ' * (@longest_flag + 1 - opt.name.size)
+        arg = opt.expects_argument ? ' <arg>' : '      '
+        helpstr << '    -' + opt.short + '|--' + opt.name + arg + tab + ': ' + opt.description + "\n"
+      end
+      helpstr
+    end
+
+    def show_help
+      puts help
+      exit
+    end
+
+    private :help_commands, :help_options, :show_help
 
     # Banner
     #
     # Example:
     #   banner 'This is the banner'
     #
-    def banner( desc = nil )
-      if desc.nil?
-        @banner
-      else
-        @banner += desc +"\n"
-      end
+    def banner(desc = nil)
+      @banner += desc + "\n" unless desc.nil?
+      @banner
     end
 
     # Command
@@ -171,19 +172,19 @@ module Pyer
     # or returns the command given in argument
     #
     def command(name = nil, desc = nil, &block)
-      if !name.nil?
+      unless name.nil?
         @longest_cmd = name.size if name.size > @longest_cmd
         cmd = Command.new(name, desc, &block)
         @commands << cmd
       end
       @command_name
     end
-    alias cmd command
+    alias_method :cmd, :command
 
     # Call the command callback of the command given in ARGV
     #
     # Example:
-    #   # show messahe when command is executed (not during parsing)
+    #   # show message when command is executed (not during parsing)
     #   command 'run', 'Running' do
     #     puts "run in progress"
     #   end
@@ -233,7 +234,6 @@ module Pyer
     #       puts "Arguments: #{args.inspect}" if opts.verbose?
     #     end
     #   end
-    #def run(callable = nil, &block)
     def run(&block)
       @runner = block if block_given?
     end
@@ -260,7 +260,8 @@ module Pyer
     def to_hash
       Hash[options.map { |opt| [opt.name.to_sym, opt.value] }]
     end
-    alias to_h to_hash
+
+    alias_method :to_h, :to_hash
 
     # Fetch a list of options which were missing from the parsed list.
     #
@@ -280,32 +281,33 @@ module Pyer
     end
 
     private
+
+    # Returns an Array of Strings representing missing options.
+    def find_option(name)
+      @triggered_options.find { |opt| opt.name == name }
+    end
+
     # Returns true if this option is present.
     # If this method does not end with a ? character it will instead
     # return the value of the option or nil
     #
     # Examples:
-    #   opts.parse %( --verbose )
+    #   opts.parse %(--verbose)
     #   opts.verbose? #=> true
     #   opts.other?   #=> false
     #
     def method_missing(method)
       meth = method.to_s
       if meth.end_with?('?')
-        meth.chop!
-        !(@triggered_options.find { |opt| opt.name == meth }).nil?
+        !find_option(meth.chop!).nil?
       else
-        o = @triggered_options.find { |opt| opt.name == meth }
-  #      o.nil? ? super : o.value
-        if o.nil?
-          nil
-        else
-          o.callback.call if o.callback.respond_to?(:call)
-          o.nil? ? nil : o.value
-        end
+        o = find_option(meth)
+        o.callback.call if !o.nil? && o.callback.respond_to?(:call)
+        o.nil? ? nil : o.value
       end
     end
 
+    # Command class
     class Command
       attr_reader :name, :description, :callback
 
@@ -316,14 +318,16 @@ module Pyer
       # block       - An optional block.
       def initialize(name, description, &block)
         @name = name.to_s
-        raise InvalidCommandError, "Command #{@name} is invalid" if @name.start_with?('-')
+        fail InvalidCommandError, "Command #{@name} is invalid" if @name.start_with?('-')
         @description = description
         @callback = (block_given? ? block : nil)
       end
     end
 
+    # Flag class
     class Flag
       attr_reader :short, :name, :description, :callback
+      attr_reader :expects_argument
       attr_accessor :value
 
       # Incapsulate internal option information, mainly used to store
@@ -336,22 +340,19 @@ module Pyer
       def initialize(name, description, &block)
         # Remove leading '-' from name if any
         @name = name.to_s.gsub(/^--?/, '')
-        raise InvalidOptionError, "Option #{@name} is invalid" if @name.size < 2
+        fail InvalidOptionError, "Option #{@name} is invalid" if @name.size < 2
         @expects_argument = false
         @value = false
         @short = @name[0]
         @description = description
         @callback = (block_given? ? block : nil)
       end
-
-      # Returns true if this option expects an argument.
-      def expects_argument?
-        @expects_argument
-      end
     end
 
+    # Value class
     class Value
       attr_reader :short, :name, :description, :callback
+      attr_reader :expects_argument
       attr_accessor :value
 
       # Incapsulate internal option information, mainly used to store
@@ -364,20 +365,14 @@ module Pyer
       def initialize(name, description, &block)
         # Remove leading '-' from name if any
         @name = name.to_s.gsub(/^--?/, '')
-        raise InvalidOptionError, "Option #{@name} is invalid" if @name.size < 2
+        fail InvalidOptionError, "Value #{@name} is invalid" if @name.size < 2
         @expects_argument = true
         @value = nil
         @short = @name[0]
         @description = description
         @callback = (block_given? ? block : nil)
       end
-
-      # Returns true if this option expects an argument.
-      def expects_argument?
-        @expects_argument
-      end
     end
-
   end
 end
 
