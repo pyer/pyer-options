@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require "minitest/autorun"
 require './lib/pyer/options.rb'
 
@@ -351,30 +352,6 @@ class TestOptions < Minitest::Test
         flag 'verbose', 'Enable verbose mode'
       end
       assert( opts.verbose? )
-    end
-
-    def test_missing_short_option
-      args = ['-v']
-      opts = Options.parse(args) do
-        flag 'dummy', 'Dummy option'
-        flag 'help', 'Show some help'
-        flag 'verbose', 'Enable verbose mode'
-        flag 'zzz', 'Z as Zero'
-      end
-#      p opts.missing
-      assert( opts.missing == ['dummy', 'help', 'zzz'] )
-    end
-
-    def test_missing_long_option
-      args = ['--verbose']
-      opts = Options.parse(args) do
-        flag 'dummy', 'Dummy option'
-        flag 'help', 'Show some help'
-        flag 'verbose', 'Enable verbose mode'
-        flag 'zzz', 'Z as Zero'
-      end
-#      p opts.missing
-      assert( opts.missing == ['dummy', 'help', 'zzz'] )
     end
 
 end
