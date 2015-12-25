@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - remove run option
 - test source instead of installed gem
 - add test/sample.rb
+- split tests into several files sorted by class
+- Rubocop compliant
+- add .rubocop.yml
 - add CHANGELOG.md
 
 ## [2.0.2] - 2015-12-15
