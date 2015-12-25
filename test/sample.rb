@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
+# encoding: UTF-8
 
-#require 'pyer/options'
+# require 'pyer/options'
 require './lib/pyer/options.rb'
 
 opts = Options.parse do
@@ -18,5 +19,3 @@ puts "name defined:     #{opts.name?}"     #=> true
 puts "name:             #{opts.name}"      #=> 'Lee'
 puts "name from array:  #{opts[:name]}"    #=> 'Lee'
 puts "options hash:     #{opts.to_hash}"   #=> {:name=>"Lee", :password=>nil, :verbose=>true}
-puts "help text:"
-puts opts.help
