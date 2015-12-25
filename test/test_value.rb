@@ -92,7 +92,7 @@ class TestValue < Minitest::Test
 
   def test_invalid_argument
     args = ['--name', '-v']
-    assert_raises(Pyer::InvalidArgumentError) do
+    assert_raises(Pyer::MissingArgumentError) do
       Options.parse(args) do
         value 'name', 'Enter your name'
         flag 'verbose', 'Enable verbose mode'

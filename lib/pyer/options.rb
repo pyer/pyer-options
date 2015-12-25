@@ -20,10 +20,6 @@ module Pyer
   class MissingArgumentError < StandardError
   end
 
-  # Raised when an option argument starts whith '-'
-  class InvalidArgumentError < StandardError
-  end
-
   # Options class
   class Options
     include Enumerable
@@ -82,8 +78,7 @@ module Pyer
         option = parse_option(item)
         if option.expects_argument
           option.value = items.shift
-          fail MissingArgumentError, "missing #{item} argument" if option.value.nil?
-          fail InvalidArgumentError, "(#{item}=#{option.value}) argument can't start with '-'" if option.value.start_with?('-')
+          fail MissingArgumentError, "missing #{item} argument" if option.value.nil? || option.value.start_with?('-')
         else
           option.value = true
         end
