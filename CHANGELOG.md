@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [2.0.3] - 2015-12-24
 - refactoring to remove offense detected by Rubocop
+- remove run option
 - test source instead of installed gem
 - add test/sample.rb
 - add CHANGELOG.md
