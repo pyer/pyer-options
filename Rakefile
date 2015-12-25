@@ -12,7 +12,11 @@ target = "#{spec.name}-#{spec.version}.gem"
 
 desc 'Test gem'
 task :test do
-  ruby "test/test_options.rb"
+  ruby "test/test_banner.rb"
+  ruby "test/test_command.rb"
+  ruby "test/test_help.rb"
+  ruby "test/test_flag.rb"
+  ruby "test/test_value.rb"
 end
 
 desc 'Default is build'
@@ -25,7 +29,7 @@ end
  
 desc 'Install gem'
 task :install do
-  gi=Gem::Installer.new target
+  gi = Gem::Installer.new target
   gi.install
 end
  
