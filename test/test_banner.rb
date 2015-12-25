@@ -3,7 +3,6 @@ require 'minitest/autorun'
 require './lib/pyer/options.rb'
 
 class TestBanner < Minitest::Test
-
   def test_one_banner
     args = ['-v']
     opts = Options.parse(args) do

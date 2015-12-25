@@ -3,7 +3,6 @@ require 'minitest/autorun'
 require './lib/pyer/options.rb'
 
 class TestHelp < Minitest::Test
-
   def test_help
     args = ['-v']
     opts = Options.parse(args) do

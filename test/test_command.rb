@@ -3,7 +3,6 @@ require 'minitest/autorun'
 require './lib/pyer/options.rb'
 
 class TestCommand < Minitest::Test
-
   def test_command
     args = ['get']
     opts = Options.parse(args) do

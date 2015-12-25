@@ -3,7 +3,6 @@ require 'minitest/autorun'
 require './lib/pyer/options.rb'
 
 class TestValue < Minitest::Test
-
   def test_simple_value1
     args = ['-i', '123']
     opts = Options.parse(args) do
