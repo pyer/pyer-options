@@ -4,11 +4,16 @@
 # require 'pyer/options'
 require './lib/pyer/options.rb'
 
-opts = Options.parse do
-  banner 'Some help text'
-  value  'name',     'Your name'
-  value  'password', 'Your password'
-  flag   'verbose',  'Enable verbose mode'
+begin
+  opts = Options.parse do
+    banner 'Some help text'
+    value  'name',     'Your name'
+    value  'password', 'Your password'
+    flag   'verbose',  'Enable verbose mode'
+  end
+rescue => e
+  puts "Error: #{e.message}"
+  exit
 end
 
 # if ARGV is `--name Lee -v`
