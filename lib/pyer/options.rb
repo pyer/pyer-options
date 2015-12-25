@@ -1,32 +1,32 @@
 # encoding: UTF-8
 module Pyer
+  # Raised when the command starts whith '-', or is not given
+  class InvalidCommandError < StandardError
+  end
+
+  # Raised when the command is not defined
+  class UnknownCommandError < StandardError
+  end
+
+  # Raised when an invalid option is found.
+  class InvalidOptionError < StandardError
+  end
+
+  # Raised when an unknown option is found.
+  class UnknownOptionError < StandardError
+  end
+
+  # Raised when an option argument is expected but none are given.
+  class MissingArgumentError < StandardError
+  end
+
+  # Raised when an option argument starts whith '-'
+  class InvalidArgumentError < StandardError
+  end
+
   # Options class
   class Options
     include Enumerable
-
-    # Raised when the command starts whith '-', or is not given
-    class InvalidCommandError < StandardError
-    end
-
-    # Raised when the command is not defined
-    class UnknownCommandError < StandardError
-    end
-
-    # Raised when an invalid option is found.
-    class InvalidOptionError < StandardError
-    end
-
-    # Raised when an unknown option is found.
-    class UnknownOptionError < StandardError
-    end
-
-    # Raised when an option argument is expected but none are given.
-    class MissingArgumentError < StandardError
-    end
-
-    # Raised when an option argument starts whith '-'
-    class InvalidArgumentError < StandardError
-    end
 
     # items  - The Array of items to extract options from (default: ARGV).
     # block  - An optional block used to add options.
@@ -52,7 +52,6 @@ module Pyer
     # block  - An optional block used to specify options.
     def initialize(&block)
       @banner = ''
-      @runner = nil
       @commands = []
       @command_name = nil
       @command_callback = nil
@@ -74,7 +73,7 @@ module Pyer
       # need some help ?
       show_help if item == '?' || item == '-h' || item == '--help' || item == 'help' || item.nil?
       # parsing command
-      unless @commands.empty?
+      unless commands.empty?
         parse_command(item)
         item = items.shift
       end
@@ -90,7 +89,6 @@ module Pyer
         end
         item = items.shift
       end
-      @runner.call(self, items) if @runner.respond_to?(:call)
       # return the Options instance
       self
     end
@@ -118,10 +116,10 @@ module Pyer
     # Print a handy Options help string and exit.
     def help
       helpstr = "Usage: #{File.basename($PROGRAM_NAME)} "
-      helpstr << 'command ' unless @commands.empty?
+      helpstr << 'command ' unless commands.empty?
       helpstr << "[options]\n"
-      helpstr << @banner unless @banner.empty?
-      helpstr << help_commands unless @commands.empty?
+      helpstr << banner unless banner.empty?
+      helpstr << help_commands unless commands.empty?
       helpstr << help_options
       helpstr
     end
@@ -168,7 +166,7 @@ module Pyer
     #   command 'run', 'Running'
     #   command :test, 'Testing'
     #
-    # Returns the created instance of Options::Command.
+    # Returns the created instance of Command.
     # or returns the command given in argument
     #
     def command(name = nil, desc = nil, &block)
@@ -199,7 +197,7 @@ module Pyer
     #   value 'user', 'Your username'
     #   value :pass,  'Your password'
     #
-    # Returns the created instance of Options::Value.
+    # Returns the created instance of Value.
     #
     def value(name, desc, &block)
       @longest_flag = name.size if name.size > @longest_flag
@@ -214,28 +212,13 @@ module Pyer
     #   flag :verbose, 'Enable verbose mode'
     #   flag 'debug',  'Enable debug mode'
     #
-    # Returns the created instance of Options::Flag.
+    # Returns the created instance of Flag.
     #
     def flag(name, desc, &block)
       @longest_flag = name.size if name.size > @longest_flag
       option = Flag.new(name, desc, &block)
       @options << option
       option
-    end
-
-    # Specify code to be executed when these options are parsed.
-    #
-    # Example:
-    #
-    #   opts = Options.parse do
-    #     flag :v, :verbose
-    #
-    #     run do |opts, args|
-    #       puts "Arguments: #{args.inspect}" if opts.verbose?
-    #     end
-    #   end
-    def run(&block)
-      @runner = block if block_given?
     end
 
     # Fetch an options argument value.
@@ -249,7 +232,7 @@ module Pyer
       option.value if option
     end
 
-    # Enumerable interface. Yields each Options::Option.
+    # Enumerable interface. Yields each Option.
     def each(&block)
       options.each(&block)
     end
@@ -262,23 +245,6 @@ module Pyer
     end
 
     alias_method :to_h, :to_hash
-
-    # Fetch a list of options which were missing from the parsed list.
-    #
-    # Examples:
-    #
-    #   opts = Options.new do
-    #     value :n, :name
-    #     value :p, :password
-    #   end
-    #
-    #   opts.parse %w[ --name Lee ]
-    #   opts.missing #=> ['password']
-    #
-    # Returns an Array of Strings representing missing options.
-    def missing
-      (options - @triggered_options).map(&:name)
-    end
 
     private
 
@@ -306,72 +272,62 @@ module Pyer
         o.nil? ? nil : o.value
       end
     end
+  end
 
-    # Command class
-    class Command
-      attr_reader :name, :description, :callback
+  # Command class
+  class Command
+    attr_reader :name, :description, :callback
 
-      # Incapsulate internal command.
-      #
-      # name        - The String or Symbol command name.
-      # description - The String description text.
-      # block       - An optional block.
-      def initialize(name, description, &block)
-        @name = name.to_s
-        fail InvalidCommandError, "Command #{@name} is invalid" if @name.start_with?('-')
-        @description = description
-        @callback = (block_given? ? block : nil)
-      end
+    # Incapsulate internal command.
+    #
+    # name        - The String or Symbol command name.
+    # description - The String description text.
+    # block       - An optional block.
+    def initialize(name, description, &block)
+      @name = name.to_s
+      fail InvalidCommandError, "Command #{@name} is invalid" if @name.start_with?('-')
+      @description = description
+      @callback = (block_given? ? block : nil)
     end
+  end
 
-    # Flag class
-    class Flag
-      attr_reader :short, :name, :description, :callback
-      attr_reader :expects_argument
-      attr_accessor :value
+  # Option class
+  class Option
+    attr_reader :short, :name, :description, :callback
+    attr_reader :expects_argument
+    attr_accessor :value
 
-      # Incapsulate internal option information, mainly used to store
-      # option specific configuration data, most of the meat of this
-      # class is found in the #value method.
-      #
-      # name        - The String or Symbol option name.
-      # description - The String description text.
-      # block       - An optional block.
-      def initialize(name, description, &block)
-        # Remove leading '-' from name if any
-        @name = name.to_s.gsub(/^--?/, '')
-        fail InvalidOptionError, "Option #{@name} is invalid" if @name.size < 2
-        @expects_argument = false
-        @value = false
-        @short = @name[0]
-        @description = description
-        @callback = (block_given? ? block : nil)
-      end
+    # Incapsulate internal option information, mainly used to store
+    # option specific configuration data.
+    #
+    # name        - The String or Symbol option name.
+    # description - The String description text.
+    # block       - An optional block.
+    def initialize(name, description, &block)
+      # Remove leading '-' from name if any
+      @name = name.to_s.gsub(/^--?/, '')
+      fail InvalidOptionError, "Option #{@name} is invalid" if @name.size < 2
+      @expects_argument = false
+      @value = nil
+      @short = @name[0]
+      @description = description
+      @callback = (block_given? ? block : nil)
     end
+  end
 
-    # Value class
-    class Value
-      attr_reader :short, :name, :description, :callback
-      attr_reader :expects_argument
-      attr_accessor :value
+  # Flag class
+  class Flag < Option
+    def initialize(name, description, &block)
+      super
+      @value = false
+    end
+  end
 
-      # Incapsulate internal option information, mainly used to store
-      # option specific configuration data, most of the meat of this
-      # class is found in the #value method.
-      #
-      # name        - The String or Symbol option name.
-      # description - The String description text.
-      # block       - An optional block.
-      def initialize(name, description, &block)
-        # Remove leading '-' from name if any
-        @name = name.to_s.gsub(/^--?/, '')
-        fail InvalidOptionError, "Value #{@name} is invalid" if @name.size < 2
-        @expects_argument = true
-        @value = nil
-        @short = @name[0]
-        @description = description
-        @callback = (block_given? ? block : nil)
-      end
+  # Value class
+  class Value < Option
+    def initialize(name, description, &block)
+      super
+      @expects_argument = true
     end
   end
 end
