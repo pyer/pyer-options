@@ -13,7 +13,6 @@ Usage
 Options parses somes words:
 
 * banner  : banner add text to the help message. Help message is displayed with implicit option -h|--help|?|help.
-* run     : run block is executed during options parsing.
 * flag    : Linux style boolean option. For example [--verbose] sets verbose flag true. Short option is the first letter of the long option name.
 * value   : Linux style option. Next argument is the value of the option. For example [--name pyer] means name='pyer'. Short option is the first letter of the long option name, as flag option.
 * command : Git style sub-commands, For example [programm status --verbose] means programm executes status command in verbose mode.
