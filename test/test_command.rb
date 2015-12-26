@@ -17,16 +17,18 @@ class TestCommand < Minitest::Test
 
   def test_command_with_block
     args = ['get']
+    gb = nil
     opts = Options.parse(args) do
       command 'get', 'Get value' do
-        'GET callback'
+        gb = 'GET given block'
       end
       command 'set', 'Set value' do
-        'SET callback'
+        gb = 'SET given block'
       end
       flag   'verbose', 'Enable verbose mode'
     end
-    assert_equal(opts.callback, 'GET callback')
+    assert_equal(opts.command, 'get')
+    assert_equal(gb, 'GET given block')
   end
 
   def test_invalid_command
