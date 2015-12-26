@@ -49,12 +49,11 @@ module Pyer
     def initialize(&block)
       @banner = ''
       @commands = []
-      @command_name = nil
-      @command_callback = nil
+      @triggered_command = nil
       @options = []
       @triggered_options = []
       @longest_cmd = 0
-      @longest_flag = 0
+      @longest_opt = 0
       instance_eval(&block) if block_given?
     end
 
@@ -91,8 +90,7 @@ module Pyer
     def parse_command(command)
       cmd = commands.find { |c| c.name == command }
       fail UnknownCommandError if cmd.nil?
-      @command_name = cmd.name
-      @command_call = cmd.callback
+      @triggered_command = cmd
     end
 
     def parse_option(option)
@@ -113,7 +111,7 @@ module Pyer
       helpstr = "Usage: #{File.basename($PROGRAM_NAME)} "
       helpstr << 'command ' unless commands.empty?
       helpstr << "[options]\n"
-      helpstr << banner unless banner.empty?
+      helpstr << '  ' + banner unless banner.empty?
       helpstr << help_commands unless commands.empty?
       helpstr << help_options
       helpstr
@@ -131,7 +129,7 @@ module Pyer
     def help_options
       helpstr = "Options:\n"
       @options.each do |opt|
-        tab = ' ' * (@longest_flag + 1 - opt.name.size)
+        tab = ' ' * (@longest_opt + 1 - opt.name.size)
         arg = opt.expects_argument ? ' <arg>' : '      '
         helpstr << '    -' + opt.short + '|--' + opt.name + arg + tab + ': ' + opt.description + "\n"
       end
@@ -165,26 +163,16 @@ module Pyer
     # or returns the command given in argument
     #
     def command(name = nil, desc = nil, &block)
-      unless name.nil?
+      if name.nil?
+        @triggered_command.callback.call if !@triggered_command.nil? && @triggered_command.callback.respond_to?(:call)
+        @triggered_command.nil? ? nil : @triggered_command.name
+      else
         @longest_cmd = name.size if name.size > @longest_cmd
         cmd = Command.new(name, desc, &block)
         @commands << cmd
       end
-      @command_name
     end
     alias_method :cmd, :command
-
-    # Call the command callback of the command given in ARGV
-    #
-    # Example:
-    #   # show message when command is executed (not during parsing)
-    #   command 'run', 'Running' do
-    #     puts "run in progress"
-    #   end
-    #
-    def callback
-      @command_call.call if @command_call.respond_to?(:call)
-    end
 
     # Add a value to options
     #
@@ -195,7 +183,7 @@ module Pyer
     # Returns the created instance of Value.
     #
     def value(name, desc, &block)
-      @longest_flag = name.size if name.size > @longest_flag
+      @longest_opt = name.size if name.size > @longest_opt
       option = Value.new(name, desc, &block)
       @options << option
       option
@@ -210,7 +198,7 @@ module Pyer
     # Returns the created instance of Flag.
     #
     def flag(name, desc, &block)
-      @longest_flag = name.size if name.size > @longest_flag
+      @longest_opt = name.size if name.size > @longest_opt
       option = Flag.new(name, desc, &block)
       @options << option
       option
