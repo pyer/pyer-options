@@ -10,6 +10,9 @@ $LOAD_PATH << 'lib/pyer'
 spec = Gem::Specification.load('pyer-options.gemspec')
 target = "#{spec.name}-#{spec.version}.gem"
 
+desc 'Test and build'
+task default: [:test, :build]
+
 desc 'Test gem'
 task :test do
   ruby 'test/test_banner.rb'
@@ -18,9 +21,6 @@ task :test do
   ruby 'test/test_flag.rb'
   ruby 'test/test_value.rb'
 end
-
-desc 'Default is build'
-task default: :build
 
 desc 'Build gem'
 task build: :clean do
