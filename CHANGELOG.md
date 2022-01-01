@@ -3,6 +3,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2022-01-01
+- rename repository
+- replace Travis by GitHub workflow
+
 ## [2.0.3] - 2015-12-24
 - refactoring to remove offense detected by Rubocop
 - remove run option
