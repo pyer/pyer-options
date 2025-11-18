@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.test_files    = []
   s.require_paths = ['lib']
 
-  s.required_ruby_version = '>= 3.4.0'
+  s.required_ruby_version = '>= 3.0.0'
 
   s.add_development_dependency 'rake',     '>= 13.3.0'
   s.add_development_dependency 'minitest', '= 5.4.2'
